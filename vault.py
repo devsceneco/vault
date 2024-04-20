@@ -11,7 +11,7 @@ def hello(name: Optional[str] = None):
     if (name):
         print(f"hello {name}")
     else:
-        print('hiee')
+        print('hi')
 
 @app.command()
 def bye():
