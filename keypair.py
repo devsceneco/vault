@@ -80,11 +80,36 @@ def list(path: Annotated[str, typer.Option(help="specify ONLY IF you passes a CU
         key_count = 0
         for file in vault:
             if file.is_file() and file.suffix == ".pem":
-                print(f":key: [cyan]{file.name}[/cyan]")
+                print(f":key: [cyan]{file.name.replace("PRIVKEY_", "").replace(".pem", " keypair")}[/cyan]")
                 key_count += 1
         print(f":sparkles: Found [bold green]{key_count}[/bold green] keypairs in [green]{path}[/green]")
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not list keypairs in vault.\n{e}")
+        raise typer.Exit()
+
+@app.command()
+def delete(alias: Annotated[str, typer.Argument(help="name of the keypair to delete")]):
+    """
+    deletes a keypair from your vault
+    """
+    try:
+        # get vault path
+        path = get_vault_path()
+
+        # delete keypair
+        if Path(path).joinpath(f"PRIVKEY_{alias}.pem").exists():
+            Path(path).joinpath(f"PRIVKEY_{alias}.pem").unlink()
+            print(f":wastebasket: [bold green] Success:[/bold green] PRIVKEY [green]{alias}[/green] deleted.")
+        else:
+            print(f":warning: [bold red]Error:[/bold red] PRIVKEY [red]{alias}[/red] not found in vault.")
+        if Path(path).joinpath(f"PUBKEY_{alias}.pub").exists():
+            Path(path).joinpath(f"PUBKEY_{alias}.pub").unlink()
+            print(f":wastebasket: [bold green] Success:[/bold green] PUBKEY [green]{alias}[/green] deleted.")
+        else:
+            print(f":warning: [bold red]Error:[/bold red] PUBKEY [red]{alias}[/red] not found in vault.")
+    except Exception as e:
+        print(f":no_entry: [bold red] Error:[/bold red] Could not delete keypair from vault.\n{e}")
+        raise typer.Exit()
 
 if __name__ == "__main__":
     app()

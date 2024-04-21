@@ -6,7 +6,6 @@ import typer
 
 def get_vault_path():
     try:
-        # throw test error
         hostOS = platform.system()
         vault_path = ""
         if hostOS == "Darwin":
