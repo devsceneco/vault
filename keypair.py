@@ -62,5 +62,29 @@ def generate(
         print(f":no_entry: [bold red]Error:[/bold red] Could not store keypair in vault.\n{e}")
         raise typer.Exit()
 
+@app.command()
+def list(path: Annotated[str, typer.Option(help="specify ONLY IF you passes a CUSTOM PATH while generating keys")] = None):
+    """
+    lists the keypairs stored in your vault
+    """
+    try:
+        # get vault path
+        if path is None:
+            path = get_vault_path()
+        else:
+            path = Path(path)
+
+        # get files in vault
+        vault = path.iterdir()
+        # list private keys and their count
+        key_count = 0
+        for file in vault:
+            if file.is_file() and file.suffix == ".pem":
+                print(f":key: [cyan]{file.name}[/cyan]")
+                key_count += 1
+        print(f":sparkles: Found [bold green]{key_count}[/bold green] keypairs in [green]{path}[/green]")
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not list keypairs in vault.\n{e}")
+
 if __name__ == "__main__":
     app()
