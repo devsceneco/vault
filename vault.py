@@ -1,7 +1,6 @@
 import typer, uuid, os
 from typing import Optional
 from typing_extensions import Annotated
-from Crypto.PublicKey import RSA
 import keypair
 
 app = typer.Typer()

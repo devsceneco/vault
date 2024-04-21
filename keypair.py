@@ -16,10 +16,10 @@ app = typer.Typer()
 
 @app.command()
 def generate(
-    passwd: Annotated[str, typer.Option()] = None,
-    algo: Annotated[List[Algo], typer.Option()] = [Algo.RSA],
-    path: Annotated[str, typer.Option()] = None,
-    alias: Annotated[str, typer.Option()] = None,
+    passwd: Annotated[str, typer.Option(help="to encrypt the private key file, default is none")] = None,
+    algo: Annotated[List[Algo], typer.Option(help="currently supports RSA [default] and ECC")] = [Algo.RSA],
+    path: Annotated[str, typer.Option(help="CUSTOM PATH for keys, PREVENTS vault from managing your keys")] = None,
+    alias: Annotated[str, typer.Option(help="to name the key, default is random 6 digit id")] = None,
 ):
     """
     generates an asymmetric keypair and stores it in your vault
@@ -45,7 +45,7 @@ def generate(
             path = get_vault_path()
         else:
             path = Path(path)
-            path.mkdir(parents=True, exist_ok=True)
+
         # store keypair
         with open(Path(path).joinpath(f"{alias}.pem"), "wb") as f:
             if passwd is None:
@@ -60,7 +60,7 @@ def generate(
         print(f":tada: [bold green]Success:[/bold green] Keypair generated and stored in [green]{path}[/green]")
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not store keypair in vault.\n{e}")
-        exit(1)
+        raise typer.Exit()
 
 if __name__ == "__main__":
     app()
