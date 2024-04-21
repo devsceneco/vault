@@ -5,3 +5,4 @@ __pycache__
 *.pem
 *.pub
 .DS_Store
+*.zip

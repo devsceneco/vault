@@ -1,24 +1,13 @@
 import typer, uuid, os
-from typing import Optional
 from typing_extensions import Annotated
-import keypair
+from rich import print
+import keypair, encrypt
 
 app = typer.Typer()
-app.add_typer(keypair.app, name="keypair")
-
-@app.command()
-def bye():
-    """
-    just says byee
-    """
-    print('byee')
-
-@app.command()
-def add(x: int, y: int):
-    """
-    returns sum of two integers
-    """
-    print(x + y)
+# key management app
+app.add_typer(keypair.app, name="keypair", help="generate, store and manage asymmetric keypairs")
+# file encryption app
+app.add_typer(encrypt.app, name="encrypt", help="encrypt a file using a key")
 
 if __name__ == "__main__":
     app()
