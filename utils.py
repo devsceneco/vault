@@ -9,7 +9,7 @@ def get_vault_path():
         # throw test error
         hostOS = platform.system()
         vault_path = ""
-        if hostOS == "Darwi":
+        if hostOS == "Darwin":
             vault_path = Path('/Users/').joinpath(os.getlogin(), '.vault', 'keys')
         elif hostOS == "Linux":
             vault_path = Path('/usr/').joinpath('share', 'vault', 'keys')
