@@ -1,17 +1,10 @@
-import typer
+import typer, uuid, os
 from typing import Optional
+from typing_extensions import Annotated
+import keypair
 
 app = typer.Typer()
-
-@app.command()
-def hello(name: Optional[str] = None):
-    """
-    greets you by name, if name is passed
-    """
-    if (name):
-        print(f"hello {name}")
-    else:
-        print('hiee')
+app.add_typer(keypair.app, name="keypair")
 
 @app.command()
 def bye():
