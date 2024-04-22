@@ -1,17 +1,24 @@
+from enum import Enum
 import os, platform, shutil
 from pathlib import Path
-from rich import print  # printing rich text
+from rich import print
 from typer import Exit
 from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA, ECC
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 
-# locate a managed keys directory or create one if it doesn't exist
+# enum of supported key algorithms
+class Algo(str, Enum):
+    RSA = "RSA",
+    ECC = "ECC",
+
+
+# locate a vault directory
+# create one if one doesn't exist
 def get_vault_path(dir: str):
     try:
         # get the right path based on the host OS
-        # TODO - add support for other OS
         hostOS = platform.system()
         vault_path = ""
         if hostOS == "Darwin":
@@ -42,15 +49,15 @@ def encrypt_file_aes(file: Path, key: bytes, output: Path):
             ct_bytes = cipher.encrypt(pad(data, AES.block_size))
             ct = b64encode(ct_bytes).decode('utf-8')
             iv = b64encode(cipher.iv).decode('utf-8')
-            # write iv + ciphertext to output file
             # get file name from path
             out_name = file.stem + file.suffix
+            # write iv + ciphertext to output file
             with open (Path(output).joinpath(f"{out_name}.enc"), 'w') as o:
                 o.write(iv + ct)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
         raise Exit("Exited with status code 1.")
-    
+
 
 # decrypt a file using aes and save to output path
 def decrypt_file_aes(file: Path, key: bytes, output: Path):
@@ -88,7 +95,7 @@ def encrypt_message_rsa(message: bytes, key_path: Path, output: Path):
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt AES key.\n{e}")
         raise Exit("Exited with status code 1.")
-    
+
 # decrypt a key using RSA and save to output path
 def decrypt_message_rsa(ciphertext: bytes, key_path: Path, output: Path):
     try:
@@ -112,4 +119,19 @@ def compress_folder(alias: str, folder_path: Path):
         else: raise Exception("Error saving ZIP archive!")
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not compress folder.\n{e}")
+        raise Exit("Exited with status code 1.")
+
+# generate a key based on algo, RSA default
+def generate_private_key(algo: str):
+    try:
+        key = None
+        match(algo):
+            case Algo.RSA: key = RSA.generate(2048)
+            case Algo.ECC: key = ECC.generate(curve='P-256')
+            # default case - RSA
+            case _: key = RSA.generate(2048)
+        if (key is None): raise Exception("Error generating private key!")
+        else: return key
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not generate private key.\n{e}")
         raise Exit("Exited with status code 1.")

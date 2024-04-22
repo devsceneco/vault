@@ -43,11 +43,5 @@ def RSA(
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
         raise typer.Exit(1)
 
-@app.command()
-def ECC(
-  file: Annotated[Path, typer.Argument(..., help="path to input file")],
-  key: Annotated[Path, typer.Argument(..., help="ALIAS of stored ECC key")],
-):
-
 if __name__ == "__main__":
     app()
