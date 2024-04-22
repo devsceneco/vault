@@ -49,7 +49,7 @@ def generate(
                     prot_params={"iteration_count": 21000}
                 )
             f.write(data)
-        with open(Path(path).joinpath(f"{alias.replace("PRIVKEY", "PUBKEY")}.pub"), "xb") as f:
+        with open(Path(path).joinpath(f"{alias.replace('PRIVKEY', 'PUBKEY')}.pub"), "xb") as f:
             data = key.public_key().export_key(format="PEM")
             f.write(data)
         print(f":tada: [bold green]Success:[/bold green] Keypair generated and stored in [green]{path}[/green]")
@@ -73,7 +73,7 @@ def list(path: Annotated[str, typer.Option(help="specify ONLY IF you passed a CU
         key_count = 0
         for file in vault:
             if file.is_file() and file.suffix == ".pem":
-                print(f":key: [cyan]{file.name.replace("PRIVKEY_", "").replace(".pem", " keypair")}[/cyan]")
+                print(f":key: [cyan]{file.name.replace('PRIVKEY_', '').replace('.pem', ' keypair')}[/cyan]")
                 key_count += 1
         print(f":sparkles: Found [bold green]{key_count}[/bold green] keypairs in [green]{path}[/green]")
     except Exception as e:
