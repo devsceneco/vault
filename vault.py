@@ -1,11 +1,9 @@
-import typer, uuid, os
-from typing_extensions import Annotated
-from rich import print
-import keypair, encrypt, decrypt
+import typer
+import keys, encrypt, decrypt
 
 app = typer.Typer()
 # key management app
-app.add_typer(keypair.app, name="keys", help="generate, store and manage keys")
+app.add_typer(keys.app, name="keys", help="generate, store and manage keys")
 # file encryption app
 app.add_typer(encrypt.app, name="encrypt", help="encrypt a file using a key")
 # file decryption app

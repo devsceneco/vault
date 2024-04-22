@@ -63,7 +63,6 @@ def generate(
 @app.command()
 def list(
     path: Annotated[str, typer.Option(help="ONLY if you store your keys at a CUSTOM PATH")] = None,
-    # TODO - add a flag to list only public keys, private keys or symmetric keys
 ):
     """
     lists the keys stored in your vault
