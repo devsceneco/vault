@@ -42,7 +42,8 @@ def encrypt_file_aes(file: Path, key: bytes, output: Path):
             ct = b64encode(ct_bytes).decode('utf-8')
             iv = b64encode(cipher.iv).decode('utf-8')
             # write iv + ciphertext to output file
-            out_name = f.name.split("/")[-1]
+            # get file name from path
+            out_name = file.stem + file.suffix
             with open (Path(output).joinpath(f"{out_name}.enc"), 'w') as o:
                 o.write(iv + ct)
     except Exception as e:
