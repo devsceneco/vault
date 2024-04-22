@@ -7,14 +7,13 @@ import utils
 app = typer.Typer()
 
 @app.command()
-def asymmetric(
+def RSA(
     file: Annotated[Path, typer.Argument(..., help="path to input file")],
-    key: Annotated[Path, typer.Argument(..., help="PATH or ALIAS of public key file")],
-    alias: Annotated[Path, typer.Option(..., help="name the project or export")] = os.urandom(4).hex(),
-    algo: Annotated[str, typer.Option(help="currently supports RSA or ECC")] = "RSA",
+    key: Annotated[Path, typer.Argument(..., help="PATH or ALIAS of RSA public key file")],
+    alias: Annotated[Path, typer.Option(..., help="name the project or export")] = os.urandom(5).hex(),
 ):
     """
-    uses hybrid encryption on files, AES + [RSA | ECC]
+    uses hybrid encryption on files, AES + RSA
     """
     try:
         # get key path
@@ -44,7 +43,11 @@ def asymmetric(
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
         raise typer.Exit(1)
 
-
+@app.command()
+def ECC(
+  file: Annotated[Path, typer.Argument(..., help="path to input file")],
+  key: Annotated[Path, typer.Argument(..., help="ALIAS of stored ECC key")],
+):
 
 if __name__ == "__main__":
     app()

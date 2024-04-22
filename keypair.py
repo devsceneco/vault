@@ -17,7 +17,7 @@ app = typer.Typer()
 
 @app.command()
 def generate(
-    alias: Annotated[str, typer.Argument(help="to name the key, default is random 6 digit id")] = None,
+    alias: Annotated[str, typer.Argument(help="to name the key, default is random 8 digit id")] = None,
     algo: Annotated[List[Algo], typer.Option(help="currently supports RSA [default] and ECC")] = [Algo.RSA],
     passwd: Annotated[str, typer.Option(help="to encrypt the private key file, default is none")] = None,
     path: Annotated[str, typer.Option(help="CUSTOM PATH for keys, PREVENTS vault from managing your keys")] = None,
@@ -35,7 +35,7 @@ def generate(
 
         # prepare private key output path
         vault_path = get_vault_path("keys")
-        if alias is None: alias = str(uuid.uuid4())[0:6]
+        if alias is None: alias = os.urandom(4).hex()
         out_path = Path(vault_path).joinpath(f"PRIVKEY_{alias}.pem")
         # store private key
         with open(out_path, "wb") as f:
@@ -168,7 +168,7 @@ def save(
             raise Exception(f"Invalid path: [red]{path}[/red]")
 
         # prepare output path
-        if alias is None: alias = os.urandom(5).hex()
+        if alias is None: alias = os.urandom(4).hex()
         if(not symmetric):
             if(private): out_path = Path(vault_path).joinpath(f"PRIVKEY_{alias}.pem")
             else: out_path = Path(vault_path).joinpath(f"PUBKEY_{alias}.pub")
