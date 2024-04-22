@@ -42,9 +42,10 @@ def generate(
             save_private_key_ecc(key, passwd, Path(out_path).joinpath(f"PRIVKEY_{alias}.pem"))
 
         # generate and store public key
-        # with open(Path(out_path).joinpath(f"PUBKEY_{alias}.pub"), "xb") as f:
-        #     data = key.public_key().export_key(format="PEM")
-        #     f.write(data)
+        with open(Path(out_path).joinpath(f"PUBKEY_{alias}.pub"), "xb") as f:
+            data = key.public_key().export_key(format="PEM")
+            if (algo == Algo.RSA): f.write(data)
+            elif (algo == Algo.ECC): f.write(data.encode())
 
         print(f":tada: [bold green]Success:[/bold green] Keypair generated and stored in vault.")
     except Exception as e:
