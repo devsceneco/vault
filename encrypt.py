@@ -38,7 +38,7 @@ def asymmetric(
 
         # package the files for transfer
         utils.compress_folder(alias, out_path)
-        print(f":white_check_mark: 3/3 saved compressed archive to {os.getcwd()}")
+        print(f":white_check_mark: 3/3 saved compressed archive to {os.getcwd()}/{alias}.zip")
 
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
