@@ -1,4 +1,4 @@
-import typer, uuid
+import typer, os
 from shutil import copyfile
 from pathlib import Path
 from typing_extensions import Annotated, List
@@ -168,7 +168,7 @@ def save(
             raise Exception(f"Invalid path: [red]{path}[/red]")
 
         # prepare output path
-        if alias is None: alias = str(uuid.uuid4())[0:6]
+        if alias is None: alias = os.urandom(5).hex()
         if(not symmetric):
             if(private): out_path = Path(vault_path).joinpath(f"PRIVKEY_{alias}.pem")
             else: out_path = Path(vault_path).joinpath(f"PUBKEY_{alias}.pub")
