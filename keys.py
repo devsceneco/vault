@@ -131,24 +131,14 @@ def delete(
             symmetric = metadata["algorithm"] == "AES"
         
         # delete symmetric key if present
-        if(symmetric):
-            if Path(path).joinpath(f"{alias}").joinpath(f"KEY_{alias}.key").exists():
-                Path(path).joinpath(f"KEY_{alias}.key").unlink()
-                print(f":wastebasket: [bold green] Success:[/bold green] KEY [green]{alias}[/green] deleted.")
-            else:
-                print(f":warning: [bold red]Error:[/bold red] KEY [red]{alias}[/red] not found in vault.")
-
-        # delete asymmetric keypair if present
+        key_path = Path(path).joinpath(alias)
+        if key_path.exists():
+            for file in key_path.glob("*"):
+                file.unlink()
+            key_path.rmdir()
+            print(f":wastebasket: [bold green] Success:[/bold green] key(pair) folder [green]{alias}[/green] deleted.")
         else:
-            # delete keypair folder
-            keypair_path = Path(path).joinpath(f"{alias}")
-            if keypair_path.exists():
-                for file in keypair_path.glob("*"):
-                    file.unlink()
-                keypair_path.rmdir()
-                print(f":wastebasket: [bold green] Success:[/bold green] Keypair [green]{alias}[/green] deleted.")
-            else:
-                print(f":warning: [bold red]Error:[/bold red] Keypair [red]{alias}[/red] not found in vault.")
+            print(f":warning: [bold red]Error:[/bold red] key(pair) folder [red]{alias}[/red] not found in vault.")
 
     except Exception as e:
         print(f":no_entry: [bold red] Error:[/bold red] Could not delete keypair from vault.\n{e}")
