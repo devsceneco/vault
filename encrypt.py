@@ -18,7 +18,7 @@ def rsa(
     """
     try:
         # get key path
-        key_path = Path(utils.get_vault_path("keys")).joinpath(f"PUBKEY_{key}.pub")
+        key_path = Path(utils.get_vault_path("keys")).joinpath(key).joinpath(f"PUBKEY_{key}.pub")
         if(not key_path.exists()): key_path = Path(key)
         if(not key_path.exists()): raise typer.BadParameter(f"Key file {key} not found.")
 

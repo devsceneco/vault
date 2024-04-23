@@ -1,5 +1,5 @@
 from enum import Enum
-import os, platform, shutil, json
+import os, platform, shutil, json, time
 from pathlib import Path
 from rich import print
 from typer import Exit
@@ -86,6 +86,17 @@ def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
         # save to output to file
         with open(out_path, "wb") as f:
             f.write(ciphertext)
+        
+        # open metadata file and update last used timestamp
+        key_alias = key_path.stem.split("_")[1]
+        metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key_alias}.json")
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+            metadata["public_key_last_used"] = time.ctime()
+        with open(metadata_path, "w") as f:
+            f.write(json.dumps(metadata))
+
+
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] RSA encryption error.\n{e}")
         raise Exit("Exited with status code 1.")
@@ -98,6 +109,16 @@ def decrypt_message_rsa(ciphertext: bytes, key_path: Path) -> bytes:
         # decrypt message
         cipher = PKCS1_OAEP.new(private_key)
         plaintext = cipher.decrypt(ciphertext)
+
+        # open metadata file and update last used timestamp
+        key_alias = key_path.stem.split("_")[1]
+        metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key_alias}.json")
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+            metadata["private_key_last_used"] = time.ctime()
+        with open(metadata_path, "w") as f:
+            f.write(json.dumps(metadata))
+
         return plaintext
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] RSA decryption error.\n{e}")
