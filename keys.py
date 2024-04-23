@@ -118,29 +118,6 @@ def delete(
         raise typer.Exit()
 
 @app.command()
-def show(alias: Annotated[str, typer.Argument(help="alias of the keypair to show")]):
-    """
-    displays the path of the keypair
-    """
-    try:
-        # get vault path
-        path = utils.get_vault_path("keys")
-
-        # show private key path if present
-        if Path(path).joinpath(f"PRIVKEY_{alias}.pem").exists():
-            print(f":key: [cyan]{Path(path).joinpath(f'PRIVKEY_{alias}.pem')}[/cyan]")
-        else:
-            print(f":warning: [bold red]Error:[/bold red] PRIVKEY [red]{alias}[/red] not found in vault.")
-        # show public key path if present
-        if Path(path).joinpath(f"PUBKEY_{alias}.pub").exists():
-            print(f":key: [cyan]{Path(path).joinpath(f'PUBKEY_{alias}.pub')}[/cyan]")
-        else:
-            print(f":warning: [bold red]Error:[/bold red] PUBKEY [red]{alias}[/red] not found in vault.")
-    except Exception as e:
-        print(f":no_entry: [bold red] Error:[/bold red] Could not show keypair from vault.\n{e}")
-        raise typer.Exit()
-
-@app.command()
 def save(
     path: Annotated[str, typer.Argument(help="path to the key to be saved")],
     alias: Annotated[str, typer.Argument(help="name the key to be saved")] = None,
