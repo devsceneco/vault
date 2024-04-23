@@ -1,17 +1,24 @@
-import os, platform, shutil
+from enum import Enum
+import os, platform, shutil, json
 from pathlib import Path
-from rich import print  # printing rich text
+from rich import print
 from typer import Exit
 from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
+from Crypto.PublicKey import RSA, ECC
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 
-# locate a managed keys directory or create one if it doesn't exist
-def get_vault_path(dir: str):
+# enum of supported key algorithms
+class Algo(str, Enum):
+    RSA = "RSA",
+    ECC = "ECC",
+
+
+# locate a vault directory
+# create one if one doesn't exist
+def get_vault_path(dir: str | Path) -> Path:
     try:
         # get the right path based on the host OS
-        # TODO - add support for other OS
         hostOS = platform.system()
         vault_path = ""
         if hostOS == "Darwin":
@@ -32,84 +39,103 @@ def get_vault_path(dir: str):
 
 
 # encrypt a file using aes and save to output path
-def encrypt_file_aes(file: Path, key: bytes, output: Path):
+def encrypt_file_aes(file: Path, key: bytes, out_path: Path, alias: str) -> None:
     try:
         # prepare key and cipher
         cipher = AES.new(key, AES.MODE_CBC)
         # read plaintext file
-        with file.open("rb") as f:
-            data = f.read()
-            ct_bytes = cipher.encrypt(pad(data, AES.block_size))
-            ct = b64encode(ct_bytes).decode('utf-8')
-            iv = b64encode(cipher.iv).decode('utf-8')
-            # write iv + ciphertext to output file
-            # get file name from path
-            out_name = file.stem + file.suffix
-            with open (Path(output).joinpath(f"{out_name}.enc"), 'w') as o:
-                o.write(iv + ct)
+        data = file.read_bytes()
+        # encrypt file to get ciphertext and iv
+        ct_bytes = cipher.encrypt(pad(data, AES.block_size))
+        iv = b64encode(cipher.iv).decode('utf-8')
+        ct = b64encode(ct_bytes).decode('utf-8')
+        result = json.dumps({'iv':iv, 'ciphertext':ct})
+        # write iv + ciphertext to output file
+        with open (Path(out_path).joinpath(f"ENC_{alias}.enc"), 'w') as o:
+            o.write(result)
     except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
+        print(f":no_entry: [bold red]Error:[/bold red] AES encryption error.\n{e}")
         raise Exit("Exited with status code 1.")
-    
 
 # decrypt a file using aes and save to output path
-def decrypt_file_aes(file: Path, key: bytes, output: Path):
+def decrypt_file_aes(file: Path, key: bytes, out_path: Path):
     try:
-        # prepare key and cipher
-        cipher = AES.new(key, AES.MODE_CBC)
-        # read ciphertext file
-        with open(file, 'r') as f:
-            data = f.read()
-            # extract iv and ciphertext
-            iv = b64decode(data[:24])
-            ciphertext = b64decode(data[24:])
-            # decrypt ciphertext
-            pt_bytes = cipher.decrypt(ciphertext)
-            # remove padding
-            pt = unpad(pt_bytes, AES.block_size)
-            # write plaintext to output file
-            with open(output, 'wb') as o:
-                o.write(pt)
+        # prepare ciphertext and iv from file
+        data = json.loads(file.read_text())
+        iv = b64decode(data['iv'])
+        ct = b64decode(data['ciphertext'])
+        # prepare cipher
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        # decrypt ciphertext
+        pt = unpad(cipher.decrypt(ct), AES.block_size)
+        # write plaintext to output file
+        with open(out_path, 'wb') as o:
+            o.write(pt)
     except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not decrypt file.\n{e}")
+        print(f":no_entry: [bold red]Error:[/bold red] AES decryption error.\n{e}")
         raise Exit("Exited with status code 1.")
 
 
 # encrypt a key using RSA and save to output path
-def encrypt_message_rsa(message: bytes, key_path: Path, output: Path):
+def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
     try:
-        # encrypt AES key with RSA public key
+        # load public key
         public_key = RSA.import_key(open(key_path).read())
+        # encrypt message
         cipher = PKCS1_OAEP.new(public_key)
         ciphertext = cipher.encrypt(message)
-        # save to key file in project path
-        with open(Path(output).joinpath("aes.key"), "wb") as f:
+        # save to output to file
+        with open(out_path, "wb") as f:
             f.write(ciphertext)
     except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt AES key.\n{e}")
+        print(f":no_entry: [bold red]Error:[/bold red] RSA encryption error.\n{e}")
         raise Exit("Exited with status code 1.")
-    
+
 # decrypt a key using RSA and save to output path
-def decrypt_message_rsa(ciphertext: bytes, key_path: Path, output: Path):
+def decrypt_message_rsa(ciphertext: bytes, key_path: Path) -> bytes:
     try:
-        # decrypt AES key with RSA private key
+        # load RSA private key
         private_key = RSA.import_key(open(key_path).read())
+        # decrypt message
         cipher = PKCS1_OAEP.new(private_key)
-        pt_bytes = cipher.decrypt(ciphertext)
-        with open(output, 'wb') as f:
-            f.write(pt_bytes)
+        plaintext = cipher.decrypt(ciphertext)
+        return plaintext
     except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not decrypt RSA message.\n{e}")
+        print(f":no_entry: [bold red]Error:[/bold red] RSA decryption error.\n{e}")
         raise Exit("Exited with status code 1.")
 
 
 # compress a folder and save to output path
-def compress_folder(alias: str, folder_path: Path):
+def compress_folder(folder_path: Path, out_path: Path, alias: str) -> None:
     try:
         # create ZIP archive
-        archived = shutil.make_archive(Path(os.getcwd()).joinpath(alias), "zip", folder_path)
+        archived = shutil.make_archive(out_path.joinpath(alias), "zip", folder_path)
         if(Path(archived).exists()): return
         else: raise Exception("Error saving ZIP archive!")
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not compress folder.\n{e}")
+        raise Exit("Exited with status code 1.")
+
+# decompress folder
+def decompress_folder(archive_path: Path, out_path: Path) -> None:
+    try:
+        # extract ZIP archive
+        shutil.unpack_archive(archive_path, out_path)
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not extract archive.\n{e}")
+        raise Exit("Exited with status code 1.")
+
+# generate a key based on algo, RSA default
+def generate_private_key(algo: str):
+    try:
+        key = None
+        match(algo):
+            case Algo.RSA: key = RSA.generate(2048)
+            case Algo.ECC: key = ECC.generate(curve='P-256')
+            # default case - RSA
+            case _: key = RSA.generate(2048)
+        if (key is None): raise Exception("Error generating private key!")
+        else: return key
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not generate private key.\n{e}")
         raise Exit("Exited with status code 1.")
