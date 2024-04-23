@@ -9,7 +9,7 @@ app = typer.Typer()
 @app.command()
 def rsa(
     file: Annotated[Path, typer.Argument(..., help="path to input file")],
-    key: Annotated[Path, typer.Argument(..., help="PATH or ALIAS of RSA public key file")],
+    key_alias: Annotated[Path, typer.Argument(..., help="alias of the public key")],
     out: Annotated[Path, typer.Argument(..., help="path to store export file")] = None,
     alias: Annotated[str, typer.Option(..., help="name the export, default is random ID")] = os.urandom(5).hex(),
 ):
@@ -18,9 +18,8 @@ def rsa(
     """
     try:
         # get key path
-        key_path = Path(utils.get_vault_path("keys")).joinpath(key).joinpath(f"PUBKEY_{key}.pub")
-        if(not key_path.exists()): key_path = Path(key)
-        if(not key_path.exists()): raise typer.BadParameter(f"Key file {key} not found.")
+        key_path = Path(utils.get_vault_path("keys")).joinpath(key_alias).joinpath(f"PUBKEY_{key_alias}.pub")
+        if(not key_path.exists()): raise typer.BadParameter(f"Key file {key_alias} not found.")
 
         # get output path
         project_path = Path(utils.get_vault_path(Path("exports").joinpath(alias)))

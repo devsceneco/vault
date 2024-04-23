@@ -21,7 +21,6 @@ def generate(
     alias: Annotated[str, typer.Argument(help="name the key, default is a random ID")] = None,
     algo: Annotated[Algo, typer.Option(help="currently supports RSA [default], ECC, and AES", case_sensitive=False)] = Algo.RSA,
     passwd: Annotated[str, typer.Option(help="to encrypt the private key file, default is none")] = None,
-    path: Annotated[str, typer.Option(help="CUSTOM PATH for keys, PREVENTS vault from managing keys")] = None,
 ):
     """
     generates key(pairs) to store in vault or custom path
@@ -32,8 +31,8 @@ def generate(
 
         # prepare private key output path
         if alias is None: alias = os.urandom(4).hex()
-        if (path is None): out_path = Path(utils.get_vault_path("keys"))
-        else: out_path = Path(path)
+        
+        out_path = Path(utils.get_vault_path("keys"))
         if not out_path.exists(): raise Exception(f"Path not found: {out_path}")
 
         # make a new folder for the new key(pair)
@@ -80,17 +79,15 @@ def generate(
         print(f":no_entry: [bold red]Error:[/bold red] Could not generate and store key(pair).\n{e}")
         raise typer.Exit()
 
+
 @app.command()
-def list(
-    path: Annotated[str, typer.Option(help="ONLY if you store your keys at a CUSTOM PATH")] = None,
-):
+def list():
     """
     lists the keys stored in your vault
     """
     try:
         # get vault path
-        if path is None: path = utils.get_vault_path("keys")
-        else: path = Path(path)
+        path = utils.get_vault_path("keys")
         if not path.exists(): raise Exception(f"Path not found: {path}")
 
         # get all the key folders in vault
@@ -114,15 +111,13 @@ def list(
 @app.command()
 def delete(
     alias: Annotated[str, typer.Argument(help="alias of the key(pair) to delete")],
-    path: Annotated[str, typer.Option(help="ONLY if you store your keys at a CUSTOM PATH")] = None,
 ):
     """
     deletes a key(pair) from your vault
     """
     try:
         # get vault path
-        if path is None: path = utils.get_vault_path("keys")
-        else: path = Path(path)
+        path = utils.get_vault_path("keys")
         if not path.exists(): raise Exception(f"Path not found: {path}")
 
         # get keypair metadata
