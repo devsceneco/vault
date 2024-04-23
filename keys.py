@@ -17,7 +17,7 @@ app = typer.Typer()
 
 @app.command()
 def generate(
-    alias: Annotated[str, typer.Argument(help="name the key, default is random 8 digit id")] = None,
+    alias: Annotated[str, typer.Argument(help="name the key, default is random random ID")] = None,
     algo: Annotated[Algo, typer.Option(help="currently supports RSA [default] and ECC", case_sensitive=False)] = Algo.RSA,
     passwd: Annotated[str, typer.Option(help="to encrypt the private key file, default is none")] = None,
     path: Annotated[str, typer.Option(help="CUSTOM PATH for keys, PREVENTS vault from managing keys")] = None,
