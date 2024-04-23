@@ -10,7 +10,7 @@ app = typer.Typer()
 def rsa(
     file: Annotated[Path, typer.Argument(..., help="path to input file")],
     key: Annotated[Path, typer.Argument(..., help="PATH or ALIAS of RSA public key file")],
-    out: Annotated[Path, typer.Option(..., help="path to store export file")] = None,
+    out: Annotated[Path, typer.Argument(..., help="path to store export file")] = None,
     alias: Annotated[str, typer.Option(..., help="name the export, default is random ID")] = os.urandom(5).hex(),
 ):
     """
