@@ -46,13 +46,12 @@ def encrypt_file_aes(file: Path, key: bytes, out_path: Path, alias: str) -> None
         # read plaintext file
         data = file.read_bytes()
         # encrypt file to get ciphertext and iv
-        ct_bytes = cipher.encrypt(pad(data, AES.block_size))
-        iv = b64encode(cipher.iv).decode('utf-8')
-        ct = b64encode(ct_bytes).decode('utf-8')
-        result = json.dumps({'iv':iv, 'ciphertext':ct})
+        ciphertext = cipher.encrypt(pad(data, AES.block_size))
+        iv = bytes(cipher.iv)
         # write iv + ciphertext to output file
-        with open (Path(out_path).joinpath(f"ENC_{alias}.enc"), 'w') as o:
-            o.write(result)
+        with open (Path(out_path).joinpath(f"ENC_{alias}.enc"), 'wb') as f:
+            f.write(iv)
+            f.write(ciphertext)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] AES encryption error.\n{e}")
         raise Exit("Exited with status code 1.")
@@ -61,16 +60,16 @@ def encrypt_file_aes(file: Path, key: bytes, out_path: Path, alias: str) -> None
 def decrypt_file_aes(file: Path, key: bytes, out_path: Path):
     try:
         # prepare ciphertext and iv from file
-        data = json.loads(file.read_text())
-        iv = b64decode(data['iv'])
-        ct = b64decode(data['ciphertext'])
+        data = file.read_bytes()
+        iv = data[:16]
+        ciphertext = data[16:]
         # prepare cipher
         cipher = AES.new(key, AES.MODE_CBC, iv)
         # decrypt ciphertext
-        pt = unpad(cipher.decrypt(ct), AES.block_size)
+        plaintext = unpad(cipher.decrypt(ciphertext), AES.block_size)
         # write plaintext to output file
         with open(out_path, 'wb') as o:
-            o.write(pt)
+            o.write(plaintext)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] AES decryption error.\n{e}")
         raise Exit("Exited with status code 1.")
