@@ -12,6 +12,7 @@ from base64 import b64encode, b64decode
 class Algo(str, Enum):
     RSA = "RSA",
     ECC = "ECC",
+    AES = "AES"
 
 
 # locate a vault directory
@@ -152,6 +153,7 @@ def generate_private_key(algo: str):
         match(algo):
             case Algo.RSA: key = RSA.generate(2048)
             case Algo.ECC: key = ECC.generate(curve='P-256')
+            case Algo.AES: key = os.urandom(32)
             # default case - RSA
             case _: key = RSA.generate(2048)
         if (key is None): raise Exception("Error generating private key!")
