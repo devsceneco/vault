@@ -38,12 +38,14 @@ def generate(
         out_path.mkdir(parents=True, exist_ok=True)
 
         # create metadata file for the key(pair) in the same folder
+        digest = utils.generate_hash_of_hash(passwd)
         metadata = {
             "alias": alias,
             "algorithm": algo,
             "created_at": time.ctime(),
             "last_used": "",
             "times_used": 0,
+            "passwd_digest": digest
         }
 
         # save AES key to file

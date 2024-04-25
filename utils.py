@@ -7,6 +7,7 @@ from typer import Exit
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA, ECC
 from Crypto.Util.Padding import pad, unpad
+from Crypto.Hash import BLAKE2b
 from base64 import b64encode, b64decode
 
 # enum of supported key algorithms
@@ -145,4 +146,21 @@ def decompress_folder(archive_path: Path, out_path: Path) -> None:
         shutil.unpack_archive(archive_path, out_path)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not extract archive.\n{e}")
+        raise Exit(1)
+
+# generate hash of hash
+def generate_hash_of_hash(message: str) -> str:
+    try:
+        # generate hash of password
+        hasherOne = BLAKE2b.new()
+        hasherOne.update(message.encode())
+        digest = hasherOne.digest()
+
+        # generate hash of hash
+        hasherTwo = BLAKE2b.new()
+        hasherTwo.update(digest)
+        return hasherTwo.hexdigest()
+
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not generate hash of hash.\n{e}")
         raise Exit(1)
