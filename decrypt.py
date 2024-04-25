@@ -9,7 +9,7 @@ app = typer.Typer()
 @app.command()
 def rsa(
     file: Annotated[Path, typer.Argument(..., help="path to encrypted ZIP archive")],
-    key_alias: Annotated[Path, typer.Argument(..., help="alias of the private key")],
+    key: Annotated[Path, typer.Argument(..., help="alias of the private key")],
     out: Annotated[Path, typer.Argument(..., help="path to directory for output file")],
 ):
     """
@@ -17,8 +17,8 @@ def rsa(
     """
     try:
         # get key path
-        key_path = Path(utils.get_vault_path("keys")).joinpath(key_alias).joinpath(f"PRIVKEY_{key_alias}.pem")
-        if(not key_path.exists()): raise typer.BadParameter(f"Key file {key_alias} not found.")
+        key_path = Path(utils.get_vault_path("keys")).joinpath(key).joinpath(f"PRIVKEY_{key}.pem")
+        if(not key_path.exists()): raise typer.BadParameter(f"Key file {key} not found.")
 
         # unpack export contents
         if(file.suffix != ".zip"): raise typer.BadParameter("File must be a ZIP archive.")
