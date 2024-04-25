@@ -6,6 +6,7 @@ from typing_extensions import Annotated, Any, List
 from Crypto.PublicKey import RSA, ECC
 from enum import Enum
 from rich import print
+import keys_utils
 
 # enum of supported algorithms
 class Algo(str, Enum):
@@ -18,20 +19,17 @@ app = typer.Typer()
 
 @app.command()
 def generate(
-    alias: Annotated[str, typer.Argument(help="name the key, default is a random ID")] = None,
-    algo: Annotated[Algo, typer.Option(help="currently supports RSA [default], ECC, and AES", case_sensitive=False)] = Algo.RSA,
-    passwd: Annotated[str, typer.Option(help="to encrypt the private key file, default is none")] = None,
+    passwd: Annotated[str, typer.Option(help="to protect the key")],
+    alias: Annotated[str, typer.Argument(help="name the key, default is a random ID")] = "",
+    algo: Annotated[Algo, typer.Option(help="algorithm for key generation & usage", case_sensitive=False)] = Algo.RSA
 ):
     """
     generates key(pairs) to store in vault or custom path
     """
     try:
-        # generate private key
-        key = utils.generate_private_key(algo)
-
         # prepare private key output path
-        if alias is None: alias = os.urandom(4).hex()
-        
+        if alias == "": alias = os.urandom(4).hex()
+
         out_path = Path(utils.get_vault_path("keys"))
         if not out_path.exists(): raise Exception(f"Path not found: {out_path}")
 
@@ -44,37 +42,33 @@ def generate(
             "alias": alias,
             "algorithm": algo,
             "created_at": time.ctime(),
+            "last_used": "",
+            "times_used": 0,
         }
 
-        # save key(s) to file
+        # save AES key to file
         if (algo == Algo.AES): # symmetric key
-            save_key_aes(key, Path(out_path).joinpath(f"KEY_{alias}.key"))
-
+            keys_utils.save_aes_key(out_path, alias, passwd)
+            # update metadata
             metadata["key"] = f"KEY_{alias}.key"
-            metadata["last_used"] = ""
 
         else: # asymmetric keypair
             if(algo == Algo.RSA):
-                save_private_key_rsa(key, passwd, Path(out_path).joinpath(f"PRIVKEY_{alias}.pem"))
-                with open(Path(out_path).joinpath(f"PUBKEY_{alias}.pub"), "xb") as f:
-                    data = key.public_key().export_key(format="PEM")
-                    f.write(data)
-        
+                keys_utils.save_rsa_keypair(out_path, alias, passwd)
             elif(algo == Algo.ECC):
-                save_private_key_ecc(key, passwd, Path(out_path).joinpath(f"PRIVKEY_{alias}.pem"))
-                with open(Path(out_path).joinpath(f"PUBKEY_{alias}.pub"), "xb") as f:
-                    data = key.public_key().export_key(format="PEM")
-                    f.write(data.encode())
-            
+                keys_utils.save_ecc_keypair(out_path, alias, passwd)
+            # update metadata
             metadata["private_key"] = f"PRIVKEY_{alias}.pem"
             metadata["private_key_last_used"] = ""
             metadata["public_key"] = f"PUBKEY_{alias}.pub"
             metadata["public_key_last_used"] = ""
 
+        # save metadata to file
         with open(out_path.joinpath(f"METADATA_{alias}.json"), "w") as f:
             f.write(json.dumps(metadata))
+
         print(f":tada: [bold green]Success:[/bold green] Keypair [green]{alias}[/green] generated and stored in vault.")
-    
+
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not generate and store key(pair).\n{e}")
         raise typer.Exit()
@@ -124,7 +118,7 @@ def delete(
         with open(Path(path).joinpath(f"{alias}/METADATA_{alias}.json"), "r") as f:
             metadata = json.loads(f.read())
             symmetric = metadata["algorithm"] == "AES"
-        
+
         # delete symmetric key if present
         key_path = Path(path).joinpath(alias)
         if key_path.exists():
@@ -142,7 +136,7 @@ def delete(
 @app.command()
 def save(
     path: Annotated[str, typer.Argument(help="path to the key to be saved")],
-    alias: Annotated[str, typer.Argument(help="name the key to be saved")] = None,
+    alias: Annotated[str, typer.Argument(help="name the key to be saved")] = "",
     symmetric: Annotated[bool, typer.Option(help="asymmetric [default] | symmetric key")] = False,
     private: Annotated[bool, typer.Option(help="public [default] | private if asymmetric key")] = False,
 ):
@@ -158,7 +152,7 @@ def save(
             raise Exception(f"Invalid path: [red]{path}[/red]")
 
         # prepare output path
-        if alias is None: alias = os.urandom(4).hex()
+        if alias == "": alias = os.urandom(4).hex()
         if(not symmetric):
             if(private): out_path = Path(vault_path).joinpath(f"PRIVKEY_{alias}.pem")
             else: out_path = Path(vault_path).joinpath(f"PUBKEY_{alias}.pub")
@@ -175,50 +169,3 @@ def save(
 
 if __name__ == "__main__":
     app()
-
-# KEY UTILS
-# save private key with password to file
-def save_private_key_rsa(key: Any, passwd: str, path: Path):
-    try:
-        if passwd is None:
-            data = key.export_key(format='PEM')
-        else:
-            data = key.export_key(
-                format='PEM', passphrase=passwd, pkcs=8,
-                protection='PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC',
-                prot_params={"iteration_count": 21000}
-            )
-        f = open(path, "xb")
-        f.write(data)
-        f.close()
-    except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not save key to file.\n{e}")
-        raise typer.Exit("Exited with status code 1.")
-
-# save private key with password to file
-def save_private_key_ecc(key: Any, passwd: str, path: Path):
-    try:
-        if passwd is None:
-            data = key.export_key(format='PEM')
-        else:
-            data = key.export_key(
-                format='PEM', passphrase=passwd,
-                protection='PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC',
-                prot_params={"iteration_count": 21000}
-            )
-        f = open(path, "xb")
-        f.write(data.encode())
-        f.close()
-    except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not save key to file.\n{e}")
-        raise typer.Exit("Exited with status code 1.")
-
-# save aes key to file
-def save_key_aes(key: bytes, path: Path):
-    try:
-        f = open(path, "xb")
-        f.write(key)
-        f.close()
-    except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not save key to file.\n{e}")
-        raise typer.Exit("Exited with status code 1.")

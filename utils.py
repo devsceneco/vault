@@ -1,4 +1,5 @@
 from enum import Enum
+from posixpath import ismount
 import os, platform, shutil, json, time
 from pathlib import Path
 from rich import print
@@ -36,7 +37,7 @@ def get_vault_path(dir: str | Path) -> Path:
         return vault_path
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not find or create a vault.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)
 
 
 # encrypt a file using aes and save to output path
@@ -55,7 +56,7 @@ def encrypt_file_aes(file: Path, key: bytes, out_path: Path, alias: str) -> None
             f.write(ciphertext)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] AES encryption error.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)
 
 # decrypt a file using aes and save to output path
 def decrypt_file_aes(file: Path, key: bytes, out_path: Path):
@@ -73,7 +74,7 @@ def decrypt_file_aes(file: Path, key: bytes, out_path: Path):
             o.write(plaintext)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] AES decryption error.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)
 
 
 # encrypt a key using RSA and save to output path
@@ -87,7 +88,7 @@ def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
         # save to output to file
         with open(out_path, "wb") as f:
             f.write(ciphertext)
-        
+
         # open metadata file and update last used timestamp
         key_alias = key_path.stem.split("_")[1]
         metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key_alias}.json")
@@ -100,7 +101,7 @@ def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
 
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] RSA encryption error.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)
 
 # decrypt a key using RSA and save to output path
 def decrypt_message_rsa(ciphertext: bytes, key_path: Path) -> bytes:
@@ -123,19 +124,19 @@ def decrypt_message_rsa(ciphertext: bytes, key_path: Path) -> bytes:
         return plaintext
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] RSA decryption error.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)
 
 
 # compress a folder and save to output path
-def compress_folder(folder_path: Path, out_path: Path, alias: str) -> None:
+def compress_folder(folder_path: Path, out_path: Path) -> None:
     try:
         # create ZIP archive
-        archived = shutil.make_archive(out_path.joinpath(alias), "zip", folder_path)
+        archived = shutil.make_archive(out_path, "zip", folder_path)
         if(Path(archived).exists()): return
         else: raise Exception("Error saving ZIP archive!")
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not compress folder.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)
 
 # decompress folder
 def decompress_folder(archive_path: Path, out_path: Path) -> None:
@@ -144,20 +145,4 @@ def decompress_folder(archive_path: Path, out_path: Path) -> None:
         shutil.unpack_archive(archive_path, out_path)
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not extract archive.\n{e}")
-        raise Exit("Exited with status code 1.")
-
-# generate a key based on algo, RSA default
-def generate_private_key(algo: str):
-    try:
-        key = None
-        match(algo):
-            case Algo.RSA: key = RSA.generate(2048)
-            case Algo.ECC: key = ECC.generate(curve='P-256')
-            case Algo.AES: key = os.urandom(32)
-            # default case - RSA
-            case _: key = RSA.generate(2048)
-        if (key is None): raise Exception("Error generating private key!")
-        else: return key
-    except Exception as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not generate private key.\n{e}")
-        raise Exit("Exited with status code 1.")
+        raise Exit(1)

@@ -10,7 +10,7 @@ app = typer.Typer()
 def rsa(
     file: Annotated[Path, typer.Argument(..., help="path to input file")],
     key: Annotated[Path, typer.Argument(..., help="alias of the public key")],
-    out: Annotated[Path, typer.Argument(..., help="path to store export file")] = None,
+    out: Annotated[Path, typer.Argument(..., help="path to store export file")],
     alias: Annotated[str, typer.Option(..., help="name the export, default is random ID")] = os.urandom(5).hex(),
 ):
     """
@@ -45,10 +45,10 @@ def rsa(
             f.write(json.dumps(metadata))
 
         # package the files for transfer
-        if(out is None): out = project_path
-        else: out = Path(out)
-        utils.compress_folder(project_path, out, alias)
-        print(f":white_check_mark: 3/3 saved compressed archive to {out}/{alias}.zip")
+        if out.exists(): out_path = Path(out).joinpath(alias)
+        else: out_path = project_path.joinpath(alias)
+        utils.compress_folder(project_path, out_path)
+        print(f":white_check_mark: 3/3 saved compressed archive to {out_path}.zip")
 
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
