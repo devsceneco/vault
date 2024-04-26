@@ -6,6 +6,8 @@ from Crypto.PublicKey import RSA, ECC
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 
+RSA_KEY_SIZE = 3072
+
 # save aes key to file
 def save_aes_key(path: Path, alias: str, password: str) -> None:
     try:
@@ -50,7 +52,7 @@ def save_ecc_keypair(out_path: Path, alias: str, password: str) -> None:
 def save_rsa_keypair(out_path: Path, alias: str, password: str) -> None:
     try:
         # generate encrypted private key
-        private_key = RSA.generate(2048)
+        private_key = RSA.generate(RSA_KEY_SIZE)
         data = private_key.export_key(
             format='PEM', passphrase=password, pkcs=8,
             protection='PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC',
