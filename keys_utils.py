@@ -1,7 +1,11 @@
+from functools import wraps
+import json
 from typer import Exit
 from pathlib import Path
 from os import urandom
 from rich import print
+from rich.console import Console
+from rich.table import Table
 from Crypto.PublicKey import RSA, ECC
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
@@ -71,4 +75,24 @@ def save_rsa_keypair(out_path: Path, alias: str, password: str) -> None:
 
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not save key to file.\n{e}")
+        raise Exit(1)
+
+# print key metadata in tables
+def print_key_metadata(metadata_path: Path) -> None:
+    try:
+        # read metadata file
+        with open(metadata_path, "r") as f:
+            data = f.read()
+            data = json.loads(data)
+        # print data in a pretty table
+        console = Console()
+        table = Table("Property", "Value", show_header=True, header_style="bold magenta")
+        for key, value in data.items():
+            value = str(value)
+            if(len(value) > 30): value = value[:10] + "..." + value[-10:]
+            table.add_row(key, value)
+        console.print(table)
+
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not read metadata file.\n{e}")
         raise Exit(1)

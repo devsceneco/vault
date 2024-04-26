@@ -8,6 +8,7 @@ from enum import Enum
 from rich import print
 import keys_utils
 
+
 # enum of supported algorithms
 class Algo(str, Enum):
     RSA = "RSA",
@@ -77,13 +78,22 @@ def generate(
 
 
 @app.command()
-def list():
+def list(
+    alias: Annotated[str, typer.Argument(help="alias of the key(pair) to list")] = "",
+):
     """
     lists the keys stored in your vault
     """
     try:
+        # get key folder path
+        if(not alias == ""):
+            print(f":key: [cyan]Key Details: {alias}[/cyan]")
+            metadata_path = utils.get_vault_path(f"keys/{alias}").joinpath(f"METADATA_{alias}.json")
+            keys_utils.print_key_metadata(metadata_path)
+            return
+
         # get vault path
-        path = utils.get_vault_path("keys")
+        path = utils.get_vault_path(f"keys")
         if not path.exists(): raise Exception(f"Path not found: {path}")
 
         # get all the key folders in vault
