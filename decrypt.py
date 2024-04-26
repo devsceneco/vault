@@ -11,6 +11,7 @@ def rsa(
     file: Annotated[Path, typer.Argument(..., help="path to encrypted ZIP archive")],
     key: Annotated[Path, typer.Argument(..., help="alias of the private key")],
     out: Annotated[Path, typer.Argument(..., help="path to directory for output file")],
+    passwd: Annotated[str, typer.Option(help="password to decrypt private key")],
 ):
     """
     decrypts hybrid encrypted file, AES + RSA
@@ -30,7 +31,7 @@ def rsa(
         # Decrypt AES key using RSA private key
         aes_key_path = Path(project_path).joinpath(f"AESKEY_{alias}.key")
         ciphertext = aes_key_path.read_bytes()
-        aes_key = utils.decrypt_message_rsa(ciphertext, key_path)
+        aes_key = utils.decrypt_message_rsa(ciphertext, key_path, passwd)
         print(f":white_check_mark: 2/3 decrypted AES key")
 
         # load file metadata

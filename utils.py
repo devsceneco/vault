@@ -105,10 +105,10 @@ def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
         raise Exit(1)
 
 # decrypt a key using RSA and save to output path
-def decrypt_message_rsa(ciphertext: bytes, key_path: Path) -> bytes:
+def decrypt_message_rsa(ciphertext: bytes, key_path: Path, password: str) -> bytes:
     try:
         # load RSA private key
-        private_key = RSA.import_key(open(key_path).read())
+        private_key = RSA.import_key(open(key_path).read(), password)
         # decrypt message
         cipher = PKCS1_OAEP.new(private_key)
         plaintext = cipher.decrypt(ciphertext)
