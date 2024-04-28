@@ -31,7 +31,7 @@ def rsa(
         print(f":white_check_mark: 1/3 saved encrypted file to {project_path}/ENC_{alias}.enc")
 
         # encrypt AES key with RSA
-        utils.encrypt_message_rsa(aes_key, key_path, project_path.joinpath(f"AESKEY_{alias}.key"))
+        utils.encrypt_message_rsa(aes_key, key, project_path.joinpath(f"AESKEY_{alias}.key"))
         print(f":white_check_mark: 2/3 saved encrypted AES key to {project_path}/AESKEY_{alias}.key")
 
         # create metadata file
@@ -41,7 +41,7 @@ def rsa(
             "stem": file.stem,
             "timestamp": time.time()
         }
-        with open (project_path.joinpath(f"METADATA_{alias}.json"), "w") as f:
+        with open(project_path.joinpath(f"METADATA_{alias}.json"), "w") as f:
             f.write(json.dumps(metadata))
 
         # package the files for transfer
