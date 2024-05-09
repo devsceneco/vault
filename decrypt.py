@@ -31,7 +31,7 @@ def rsa(
         # Decrypt AES key using RSA private key
         aes_key_path = Path(project_path).joinpath(f"AESKEY_{alias}.key")
         ciphertext = aes_key_path.read_bytes()
-        aes_key = utils.decrypt_message_rsa(ciphertext, key_path, passwd)
+        aes_key = utils.decrypt_message_rsa(ciphertext, key, passwd)
         print(f":white_check_mark: 2/3 decrypted AES key")
 
         # load file metadata

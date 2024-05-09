@@ -79,8 +79,11 @@ def decrypt_file_aes(file: Path, key: bytes, out_path: Path):
 
 
 # encrypt a key using RSA and save to output path
-def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
+def encrypt_message_rsa(message: bytes, key: str, out_path: Path) -> None:
     try:
+        # get key path
+        key_path = Path(get_vault_path("keys")).joinpath(key).joinpath(f"PUBKEY_{key}.pub")
+
         # load public key
         public_key = RSA.import_key(open(key_path).read())
         # encrypt message
@@ -91,8 +94,7 @@ def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
             f.write(ciphertext)
 
         # open metadata file and update last used timestamp
-        key_alias = key_path.stem.split("_")[1]
-        metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key_alias}.json")
+        metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key}.json")
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
             metadata["public_key_last_used"] = time.ctime()
@@ -105,8 +107,11 @@ def encrypt_message_rsa(message: bytes, key_path: Path, out_path: Path) -> None:
         raise Exit(1)
 
 # decrypt a key using RSA and save to output path
-def decrypt_message_rsa(ciphertext: bytes, key_path: Path, password: str) -> bytes:
+def decrypt_message_rsa(ciphertext: bytes, key: str, password: str) -> bytes:
     try:
+        # get key path
+        key_path = Path(get_vault_path("keys")).joinpath(key).joinpath(f"PRIVKEY_{key}.pem")
+
         # load RSA private key
         private_key = RSA.import_key(open(key_path).read(), password)
         # decrypt message
@@ -114,8 +119,7 @@ def decrypt_message_rsa(ciphertext: bytes, key_path: Path, password: str) -> byt
         plaintext = cipher.decrypt(ciphertext)
 
         # open metadata file and update last used timestamp
-        key_alias = key_path.stem.split("_")[1]
-        metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key_alias}.json")
+        metadata_path = Path(key_path).parent.joinpath(f"METADATA_{key}.json")
         with open(metadata_path, "r") as f:
             metadata = json.load(f)
             metadata["private_key_last_used"] = time.ctime()
