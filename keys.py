@@ -157,7 +157,7 @@ def save(
     """
     try:
         # get vault path
-        vault_path = utils.get_vault_path("keys")
+        vault_path = utils.get_vault_path(f"keys/{alias}")
 
         # check if file exists
         if not Path(path).is_file():
@@ -171,6 +171,22 @@ def save(
         else:
             out_path = Path(vault_path).joinpath(f"KEY_{alias}.key")
 
+        # generate metadata
+        metadata = {
+            "alias": alias,
+            "algorithm": 'RSA',
+            "created_at": time.ctime(),
+            "last_used": "",
+            "times_used": 0,
+            "passwd_digest": ""
+        }
+        metadata["private_key"] = f"PRIVKEY_{alias}.pem"
+        metadata["private_key_last_used"] = ""
+        metadata["public_key"] = f"PUBKEY_{alias}.pub"
+        metadata["public_key_last_used"] = ""
+        # save metadata file
+        with open(vault_path.joinpath(f"METADATA_{alias}.json"), "w") as f:
+            f.write(json.dumps(metadata))
         # copy file to vault
         copyfile(path, out_path)
 
