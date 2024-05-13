@@ -1,5 +1,5 @@
 import typer
-import keys, encrypt, decrypt, config
+import keys, encrypt, decrypt, config, project
 
 app = typer.Typer()
 # key management app
@@ -10,6 +10,8 @@ app.add_typer(encrypt.app, name="encrypt", help="encrypt a file using a key")
 app.add_typer(decrypt.app, name="decrypt", help="decrypt a file using a key")
 # configuration app
 app.add_typer(config.app, name="config", help="manage vault configurations")
+# project management app
+app.add_typer(project.app, name="project", help="manage imports and exports")
 
 if __name__ == "__main__":
     app()
