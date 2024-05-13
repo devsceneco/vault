@@ -21,7 +21,7 @@ def create_bucket(bucket_name: str, region=DEFAULT_REGION) -> None:
         s3 = boto3.client("s3", region_name=region, aws_access_key_id=id, aws_secret_access_key=secret)
         s3.create_bucket(Bucket=bucket_name, CreateBucketConfiguration={'LocationConstraint': region})
 
-    except ClientError as e:
+    except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not create bucket.\n{e}")
         raise typer.Exit(1)
 
@@ -41,8 +41,8 @@ def upload_file(file_path: Path, region=DEFAULT_REGION) -> None:
         with open (file_path, "rb") as f:
             s3.upload_fileobj(f, bucket_name, file_path.name)
 
-    except ClientError as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not upload file to S3. Try running [bold]vault config aws[/bold]\n{e}")
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not upload file to S3.")
         raise typer.Exit(1)
 
 def get_presigned_url(key: str, region=DEFAULT_REGION) -> str:
@@ -71,8 +71,8 @@ def get_presigned_url(key: str, region=DEFAULT_REGION) -> str:
         )
 
         return url
-    except ClientError as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not get presigned URL.\n{e}")
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not get presigned URL.")
         raise typer.Exit(1)
 
 def get_credentials() -> dict:
@@ -90,6 +90,6 @@ def get_credentials() -> dict:
             creds = json.load(f)
             return creds
 
-    except ClientError as e:
-        print(f":no_entry: [bold red]Error:[/bold red] Could not get AWS credentials.\n{e}")
+    except Exception as e:
+        print(f":no_entry: [bold red]Error:[/bold red] Could not get AWS credentials.\n:bulb: [bold green]Hint:[/bold green] try running [bold green]vault config aws[/green bold]")
         raise typer.Exit(1)
