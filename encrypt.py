@@ -2,7 +2,8 @@ import typer, os, time, json
 from rich import print
 from typing_extensions import Annotated
 from pathlib import Path
-import utils
+import utils, aws_utils
+from pyperclip import copy
 
 app = typer.Typer()
 
@@ -11,6 +12,7 @@ def rsa(
     file: Annotated[Path, typer.Argument(..., help="path to input file")],
     key: Annotated[Path, typer.Argument(..., help="alias of the public key")],
     out: Annotated[Path, typer.Argument(..., help="path to store export file")],
+    share: Annotated[bool, typer.Option(..., "--share", help="share the encrypted file")] = False,
     alias: Annotated[str, typer.Option(..., help="name the export, default is random ID")] = os.urandom(5).hex(),
 ):
     """
@@ -47,8 +49,22 @@ def rsa(
         # package the files for transfer
         if out.exists(): out_path = Path(out).joinpath(alias)
         else: out_path = project_path.joinpath(alias)
-        utils.compress_folder(project_path, out_path)
+        utils.compress_folder(project_path, out_path)        
         print(f":white_check_mark: 3/3 saved compressed archive to {out_path}.zip")
+
+        if (share):
+            out_path = out_path.with_suffix(".zip")
+            # upload archive to s3
+            aws_utils.upload_file(out_path)
+            print(f":white_check_mark: [bold green]Success:[/bold green] Archive uploaded to S3.")
+
+            # get presigned URL
+            url = aws_utils.get_presigned_url(f'{alias}.zip')
+            copy(url)
+            # print the URL
+            print(f":link: [bold green]Success:[/bold green] URL: {url}")
+            print(f":link: [bold green]Success:[/bold green] URL copied to clipboard.")
+            print(f":warning:  [bold yellow]Warning:[/bold yellow] URL expires in 10 minutes.")
 
     except Exception as e:
         print(f":no_entry: [bold red]Error:[/bold red] Could not encrypt file.\n{e}")
